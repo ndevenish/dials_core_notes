@@ -137,7 +137,7 @@ def _generate_next_meeting_text(next_meeting):
     us_time_string = _time_and_zone(us_equivalent_meeting)
 
     next_meeting_date = (
-        f"{next_meeting:%A, %B} {next_meeting.day}{date_suffix(next_meeting.day)}"
+        f"{next_next_meeting:%A, %B} {next_next_meeting.day}{date_suffix(next_next_meeting.day)}"
     )
 
     # Now, if the US equivalent is not at the expected time, we have a conflict
@@ -256,8 +256,10 @@ resp = requests.request(
   }} }}"""},
 )
 resp.raise_for_status()
+
 target = resp.json()["data"]["repository"]["ref"]["target"]
 existing_oid = target["oid"]
+
 if "file" in target and target["file"]:
     existing_content = target["file"]["object"]["text"]
     print("Got existing file...")
@@ -281,7 +283,7 @@ payload = {
                 createCommitOnBranch(input: $input) { commit { url } } }""",
     "variables": {
         "input": {
-            "branch": {"repositoryNameWithOwner": "ndevenish/test_action_news", "branchName": "main"},
+            "branch": {"repositoryNameWithOwner": f"{repo_user}/{repo_name}", "branchName": f"{repo_branch}"},
             "expectedHeadOid": existing_oid,
             "message": {"headline": "Future meeting"},
             "fileChanges": {
