@@ -190,22 +190,23 @@ tags: core meeting
 
 print(f"New meeting agenda from template:\n{BLUE}{new_agenda}{NC}")
 
-if not input("Create new note? [Yn]").lower().startswith("y"):
-    print("Not creating.")
-    sys.exit()
+# if not input("Create new note? [Yn]").lower().startswith("y"):
+#     print("Not creating.")
+#     sys.exit()
 
-new_note = request(
-    "POST",
-    "https://api.hackmd.io/v1/teams/dials/notes",
-    json={
-        "title": meeting_title,
-        "content": new_agenda,
-        "readPermission": "guest",
-        "writePermission": "signed_in",
-    },
-)
+# new_note = request(
+#     "POST",
+#     "https://api.hackmd.io/v1/teams/dials/notes",
+#     json={
+#         "title": meeting_title,
+#         "content": new_agenda,
+#         "readPermission": "guest",
+#         "writePermission": "signed_in",
+#     },
+# )
 
-note_id = new_note["id"]
+# note_id = new_note["id"]
+note_id = "PLACEHOLDER_ID"
 
 
 future_meeting_text = f"""
@@ -226,24 +227,69 @@ This is a future meeting, please see the WIP agenda at [hackmd.io](https://hackm
 {next_meeting_text}
 """.lstrip()
 
-print(f"New future meeting text:\n{BLUE}{new_agenda}{NC}")
+repo_user = "ndevenish"
+repo_name = "test_action_news"
+repo_branch = "main"
+file_path = f"collections/_core/{next_meeting}.md"
 
-if not input("Create new file in github? [Yn]").lower().startswith("y"):
+
+# Get the current HEAD id on github for the target repository
+resp = requests.request(
+    "POST",
+    "https://api.github.com/graphql",
+    headers={"Authorization": f"bearer {settings.GITHUB_TOKEN}"},
+    json={"query": f"""query {{ repository(owner: "{repo_user}", name: "{repo_name}") {{
+    id
+    ref(qualifiedName: "refs/heads/{repo_branch}") {{
+      target {{
+        oid
+        ... on Commit {{
+            file(path: "{file_path}") {{
+                object {{
+                    ... on Blob {{
+                        text
+                    }}
+                }}
+            }}
+        }}
+      }}
+    }}
+  }} }}"""},
+)
+resp.raise_for_status()
+target = resp.json()["data"]["repository"]["ref"]["target"]
+existing_oid = target["oid"]
+if "file" in target and target["file"]:
+    existing_content = target["file"]["object"]["text"]
+    print("Got existing file...")
+    if existing_content == future_meeting_text:
+        print("File matches already! Nothing to do!")
+        sys.exit()
+    print("File disagree, need to replace")
+
+
+print(f"New future meeting text for {BOLD}{file_path}{NC}:\n{BLUE}{future_meeting_text}{NC}")
+
+response = input("Create new file in github? [Yn]")
+if response and not response.lower().startswith("y"):
     print("Not creating.")
     sys.exit()
+
+print(f"Existing repository oid: {BOLD}{existing_oid}{NC}")
 
 payload = {
     "query": """mutation ($input:CreateCommitOnBranchInput!) {
                 createCommitOnBranch(input: $input) { commit { url } } }""",
     "variables": {
         "input": {
-            "branch": {"nameWithOwner": "dials/kb", "branchName": "master"},
+            "branch": {"repositoryNameWithOwner": "ndevenish/test_action_news", "branchName": "main"},
+            "expectedHeadOid": existing_oid,
             "message": {"headline": "Future meeting"},
             "fileChanges": {
                 "additions": [
                     {
-                        "path": "collections/_core/{next_meeting}.md",
-                        "contents": base64.b64encode(future_meeting_text.encode()),
+                        "path": file_path,
+                        "contents": base64.b64encode(future_meeting_text.encode()).decode(),
                     }
                 ]
             },
@@ -251,16 +297,14 @@ payload = {
     },
 }
 
-#     input:{
-#         branch:master,
-#         }) {
-
-# }
-# """
-
 resp = requests.request(
     "POST",
     "https://api.github.com/graphql",
     headers={"Authorization": f"bearer {settings.GITHUB_TOKEN}"},
-    json={"mutation": {}},
+    json=payload,
 )
+
+if not resp.ok:
+    sys.exit("Error: " + resp.text)
+
+print(f"Created {BLUE}{resp.json()['data']['createCommitOnBranch']['commit']['url']}")
