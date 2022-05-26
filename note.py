@@ -190,23 +190,22 @@ tags: core meeting
 
 print(f"New meeting agenda from template:\n{BLUE}{new_agenda}{NC}")
 
-# if not input("Create new note? [Yn]").lower().startswith("y"):
-#     print("Not creating.")
-#     sys.exit()
+if not input("Create new note? [Yn]").lower().startswith("y"):
+    print("Not creating.")
+    sys.exit()
 
-# new_note = request(
-#     "POST",
-#     "https://api.hackmd.io/v1/teams/dials/notes",
-#     json={
-#         "title": meeting_title,
-#         "content": new_agenda,
-#         "readPermission": "guest",
-#         "writePermission": "signed_in",
-#     },
-# )
+new_note = request(
+    "POST",
+    "https://api.hackmd.io/v1/teams/dials/notes",
+    json={
+        "title": meeting_title,
+        "content": new_agenda,
+        "readPermission": "guest",
+        "writePermission": "signed_in",
+    },
+)
 
-# note_id = new_note["id"]
-note_id = "PLACEHOLDER_ID"
+note_id = new_note["id"]
 
 
 future_meeting_text = f"""
@@ -227,9 +226,9 @@ This is a future meeting, please see the WIP agenda at [hackmd.io](https://hackm
 {next_meeting_text}
 """.lstrip()
 
-repo_user = "ndevenish"
-repo_name = "test_action_news"
-repo_branch = "main"
+repo_user = "dials"
+repo_name = "kb"
+repo_branch = "master"
 file_path = f"collections/_core/{next_meeting}.md"
 
 
