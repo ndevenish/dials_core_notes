@@ -186,7 +186,7 @@ tags: core meeting
 ### Next meeting
 
 {next_meeting_text}
-"""
+""".lstrip()
 
 print(f"New meeting agenda from template:\n{BLUE}{new_agenda}{NC}")
 
