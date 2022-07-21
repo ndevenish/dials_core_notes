@@ -9,6 +9,7 @@ import dateutil.parser
 import textwrap
 from pydantic import BaseSettings
 import base64
+from argparse import ArgumentParser
 
 BOLD = "\033[1m"
 BLUE = "\033[34m"
@@ -24,6 +25,8 @@ class Settings(BaseSettings):
 # HACKMD_TOKEN = Path(".HACKMD_TOKEN").read_text().strip()
 
 settings = Settings()
+parser = ArgumentParser(description="Handle updating and creation of new dials-core notes")
+parser.parse_args()
 
 
 def date_suffix(day):
@@ -190,7 +193,8 @@ tags: core meeting
 
 print(f"New meeting agenda from template:\n{BLUE}{new_agenda}{NC}")
 
-if not input("Create new note? [Yn]").lower().startswith("y"):
+response = input("Create new note? [Yn]")
+if response and not response.lower().startswith("y"):
     print("Not creating.")
     sys.exit()
 
