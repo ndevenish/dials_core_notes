@@ -61,12 +61,12 @@ def request(method: str, url: str, **kwargs):
     return r.json()
 
 
-if not Path("_cache").is_file():
-    team_notes = request("GET", "https://api.hackmd.io/v1/teams/dials/notes")
-    Path("_cache").write_text(json.dumps(team_notes))
-else:
-    print("Loading from _cache")
-    team_notes = json.loads(Path("_cache").read_text())
+#if not Path("_cache").is_file():
+team_notes = request("GET", "https://api.hackmd.io/v1/teams/dials/notes")
+Path("_cache").write_text(json.dumps(team_notes))
+#else:
+#    print("Loading from _cache")
+#    team_notes = json.loads(Path("_cache").read_text())
 
 reMeetingDate = re.compile("DIALS (?:core )?meeting (\d+)-(\d+)-(\d+)", re.I)
 
