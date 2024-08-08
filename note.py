@@ -25,7 +25,9 @@ class Settings(BaseSettings):
 # HACKMD_TOKEN = Path(".HACKMD_TOKEN").read_text().strip()
 
 settings = Settings()
-parser = ArgumentParser(description="Handle updating and creation of new dials-core notes")
+parser = ArgumentParser(
+    description="Handle updating and creation of new dials-core notes"
+)
 parser.parse_args()
 
 
@@ -61,14 +63,14 @@ def request(method: str, url: str, **kwargs):
     return r.json()
 
 
-#if not Path("_cache").is_file():
+# if not Path("_cache").is_file():
 team_notes = request("GET", "https://api.hackmd.io/v1/teams/dials/notes")
 Path("_cache").write_text(json.dumps(team_notes))
-#else:
+# else:
 #    print("Loading from _cache")
 #    team_notes = json.loads(Path("_cache").read_text())
 
-reMeetingDate = re.compile("DIALS (?:core )?meeting (\d+)-(\d+)-(\d+)", re.I)
+reMeetingDate = re.compile(r"DIALS (?:core )?meeting (\d+)-(\d+)-(\d+)", re.I)
 
 meetings = {}
 for note in team_notes:
@@ -139,9 +141,7 @@ def _generate_next_meeting_text(next_meeting):
     uk_time_string = _time_and_zone(uk_expected_meeting)
     us_time_string = _time_and_zone(us_equivalent_meeting)
 
-    next_meeting_date = (
-        f"{next_next_meeting:%A, %B} {next_next_meeting.day}{date_suffix(next_next_meeting.day)}"
-    )
+    next_meeting_date = f"{next_next_meeting:%A, %B} {next_next_meeting.day}{date_suffix(next_next_meeting.day)}"
 
     # Now, if the US equivalent is not at the expected time, we have a conflict
     if us_equivalent_meeting.time() == us_standard_meeting_time:
@@ -241,7 +241,8 @@ resp = requests.request(
     "POST",
     "https://api.github.com/graphql",
     headers={"Authorization": f"bearer {settings.GITHUB_TOKEN}"},
-    json={"query": f"""query {{ repository(owner: "{repo_user}", name: "{repo_name}") {{
+    json={
+        "query": f"""query {{ repository(owner: "{repo_user}", name: "{repo_name}") {{
     id
     ref(qualifiedName: "refs/heads/{repo_branch}") {{
       target {{
@@ -257,7 +258,8 @@ resp = requests.request(
         }}
       }}
     }}
-  }} }}"""},
+  }} }}"""
+    },
 )
 resp.raise_for_status()
 
@@ -273,7 +275,9 @@ if "file" in target and target["file"]:
     print("File disagree, need to replace")
 
 
-print(f"New future meeting text for {BOLD}{file_path}{NC}:\n{BLUE}{future_meeting_text}{NC}")
+print(
+    f"New future meeting text for {BOLD}{file_path}{NC}:\n{BLUE}{future_meeting_text}{NC}"
+)
 
 response = input("Create new file in github? [Yn]")
 if response and not response.lower().startswith("y"):
@@ -287,14 +291,19 @@ payload = {
                 createCommitOnBranch(input: $input) { commit { url } } }""",
     "variables": {
         "input": {
-            "branch": {"repositoryNameWithOwner": f"{repo_user}/{repo_name}", "branchName": f"{repo_branch}"},
+            "branch": {
+                "repositoryNameWithOwner": f"{repo_user}/{repo_name}",
+                "branchName": f"{repo_branch}",
+            },
             "expectedHeadOid": existing_oid,
             "message": {"headline": "Future meeting"},
             "fileChanges": {
                 "additions": [
                     {
                         "path": file_path,
-                        "contents": base64.b64encode(future_meeting_text.encode()).decode(),
+                        "contents": base64.b64encode(
+                            future_meeting_text.encode()
+                        ).decode(),
                     }
                 ]
             },
