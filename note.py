@@ -1,3 +1,12 @@
+#!/usr/bin/env -S uv run -q
+# /// script
+# requires-python = ">=3.10"
+# dependencies = [
+#     "pydantic<2",
+#     "python-dateutil",
+#     "requests",
+# ]
+# ///
 import sys
 import requests
 from pathlib import Path
