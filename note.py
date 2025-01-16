@@ -133,6 +133,7 @@ def _generate_next_meeting_text(next_meeting):
     # Work out if datetime is ambiguous for normal meeting times
     tz_uk = dateutil.tz.gettz("Europe/London")
     tz_us = dateutil.tz.gettz("America/Los_Angeles")
+    tz_us_ct = dateutil.tz.gettz("US/Central")
 
     # The standard meeting times, that we expect to stay static
     uk_standard_meeting_time = datetime.time(16, 00)
@@ -142,6 +143,7 @@ def _generate_next_meeting_text(next_meeting):
         next_next_meeting, uk_standard_meeting_time, tzinfo=tz_uk
     )
     us_equivalent_meeting = uk_expected_meeting.astimezone(tz_us)
+    us_cet_equivalent_meeting = uk_expected_meeting.astimezone(tz_us_ct)
 
     def _time_and_zone(dt):
         """Generate the 'time (timezone)' string"""
@@ -149,12 +151,13 @@ def _generate_next_meeting_text(next_meeting):
 
     uk_time_string = _time_and_zone(uk_expected_meeting)
     us_time_string = _time_and_zone(us_equivalent_meeting)
+    us_ct_time_string = _time_and_zone(us_cet_equivalent_meeting)
 
     next_meeting_date = f"{next_next_meeting:%A, %B} {next_next_meeting.day}{date_suffix(next_next_meeting.day)}"
 
     # Now, if the US equivalent is not at the expected time, we have a conflict
     if us_equivalent_meeting.time() == us_standard_meeting_time:
-        return f"{next_meeting_date}, {uk_time_string}, {us_time_string}"
+        return f"{next_meeting_date}, {uk_time_string}, {us_time_string}, {us_ct_time_string}"
     else:
         print(
             f"Detected timezone conflict, US {us_equivalent_meeting.time()} != {us_standard_meeting_time}, meeting must move or be cancelled"
@@ -163,18 +166,20 @@ def _generate_next_meeting_text(next_meeting):
         us_expected = datetime.datetime.combine(
             next_next_meeting, us_standard_meeting_time, tzinfo=tz_us
         )
+        us_ct_expected = us_expected.astimezone(tz_us_ct)
         uk_equivalent = us_expected.astimezone(tz_uk)
         uk_time_string_alt = _time_and_zone(uk_equivalent)
         us_time_string_alt = _time_and_zone(us_expected)
+        us_ct_time_string_alt = _time_and_zone(us_ct_expected)
         return textwrap.dedent(
             f"""
         Due to time zone changes the normal meeting time must change:
 
-        {next_meeting_date}, {uk_time_string}, {us_time_string}
+        {next_meeting_date}, {uk_time_string}, {us_time_string}, {us_ct_time_string}
 
         or
 
-        {next_meeting_date}, {uk_time_string_alt}, {us_time_string_alt}
+        {next_meeting_date}, {uk_time_string_alt}, {us_time_string_alt}, {us_ct_time_string_alt}
         """
         )
 
